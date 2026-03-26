@@ -199,7 +199,7 @@ function speakReminder(reminder) {
     if (!('speechSynthesis' in window)) return;
     
     // Don't queue if already speaking
-    if (window.speechSynthesis.speaking) return;
+    window.speechSynthesis.cancel();
     
     const text = "Reminder: It is time for " + reminder.title;
     const utterance = new SpeechSynthesisUtterance(text);
