@@ -1,0 +1,456 @@
+{% extends "base.html" %}
+{% block title %}Caretaker Dashboard - AlzCare AI{% endblock %}
+{% block body %}
+<div class="dashboard caretaker-dashboard">
+    <aside class="sidebar caretaker-sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-brain"></i>
+            <span>AlzCare<span class="text-accent">AI</span></span>
+        </div>
+        <div class="sidebar-role-badge">Caretaker</div>
+        <nav class="sidebar-nav">
+            <a href="#overview" class="nav-link active"><i class="fas fa-tachometer-alt"></i> Overview</a>
+            <a href="#reminders-mgmt" class="nav-link"><i class="fas fa-bell"></i> Reminders</a>
+            <a href="#people-mgmt" class="nav-link"><i class="fas fa-users"></i> People</a>
+            <a href="#face-tools" class="nav-link"><i class="fas fa-id-card"></i> Face Tools</a>
+            <a href="#logs" class="nav-link"><i class="fas fa-list"></i> Activity Logs</a>
+            <a href="#analytics" class="nav-link"><i class="fas fa-chart-bar"></i> Analytics</a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="/" class="nav-link"><i class="fas fa-arrow-left"></i> Back Home</a>
+            <a href="/logout" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <!-- Overview Section -->
+        <section id="overview" class="content-section">
+            <h2 class="section-header"><i class="fas fa-tachometer-alt me-2"></i>Patient Monitoring Overview</h2>
+            
+            <!-- Stat Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-lg-3">
+                    <div class="stat-card glass-card-light">
+                        <div class="stat-icon bg-primary-soft"><i class="fas fa-tasks"></i></div>
+                        <div class="stat-value">{{ stats.total }}</div>
+                        <div class="stat-label">Total Tasks</div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="stat-card glass-card-light">
+                        <div class="stat-icon bg-success-soft"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-value text-success">{{ stats.completed }}</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="stat-card glass-card-light">
+                        <div class="stat-icon bg-warning-soft"><i class="fas fa-clock"></i></div>
+                        <div class="stat-value text-warning">{{ stats.pending }}</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="stat-card glass-card-light">
+                        <div class="stat-icon bg-danger-soft"><i class="fas fa-exclamation-circle"></i></div>
+                        <div class="stat-value text-danger">{{ stats.missed }}</div>
+                        <div class="stat-label">Missed</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress + Chart Row -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="glass-card-light p-4">
+                        <h5>Daily Adherence</h5>
+                        <div class="adherence-display mt-3">
+                            <div class="adherence-circle">
+                                <span class="adherence-pct">{{ stats.adherence }}%</span>
+                            </div>
+                        </div>
+                        <div class="progress mt-3" style="height: 12px; border-radius: 8px;">
+                            <div class="progress-bar bg-gradient-primary" style="width: {{ stats.adherence }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="glass-card-light p-4">
+                        <h5>Weekly Completion Trend</h5>
+                        <canvas id="weeklyChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity + Recognition -->
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="glass-card-light p-4">
+                        <h5><i class="fas fa-list me-2"></i>Recent Activity</h5>
+                        <div class="activity-list mt-3">
+                            {% for log in recent_logs[:8] %}
+                            <div class="activity-item">
+                                <div class="activity-dot {{ log.category }}"></div>
+                                <div>
+                                    <strong>{{ log.action }}</strong>
+                                    <p class="mb-0 small text-muted">{{ log.details }} • {{ log.timestamp }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% if not recent_logs %}<p class="text-muted">No recent activity</p>{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="glass-card-light p-4">
+                        <h5><i class="fas fa-eye me-2"></i>Recognition History</h5>
+                        <div class="activity-list mt-3">
+                            {% for log in recognition_logs[:8] %}
+                            <div class="activity-item">
+                                <div class="activity-dot face"></div>
+                                <div>
+                                    <strong>{{ log.person_name }}</strong>
+                                    <p class="mb-0 small text-muted">Confidence: {{ log.confidence }}% • {{ log.timestamp }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% if not recognition_logs %}<p class="text-muted">No recognition logs yet</p>{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reminders Management -->
+        <section id="reminders-mgmt" class="content-section" style="display:none">
+            <h2 class="section-header"><i class="fas fa-bell me-2"></i>Manage Reminders</h2>
+            
+            <div class="glass-card-light p-4 mb-4">
+                <h5>Add New Reminder</h5>
+                <form id="addReminderForm" class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" id="reminderTitle" placeholder="Reminder title" required>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="time" class="form-control" id="reminderTime" required>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="reminderType">
+                            <option value="medicine">💊 Medicine</option>
+                            <option value="food">🍽️ Food</option>
+                            <option value="water">💧 Water</option>
+                            <option value="walk">🚶 Walk</option>
+                            <option value="sleep">😴 Sleep</option>
+                            <option value="exercise">🏋️ Exercise</option>
+                            <option value="general">📋 General</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="date" class="form-control" id="reminderDate" value="">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill">
+                            <i class="fas fa-plus me-1"></i>Add
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="remindersList" class="row g-3">
+                {% for r in reminders %}
+                <div class="col-md-6" id="reminder-{{ r.id }}">
+                    <div class="reminder-card glass-card-light {% if r.status == 'done' %}completed{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="reminder-type-badge {{ r.type }}">{{ r.type | upper }}</div>
+                                <h5 class="mt-2">{{ r.title }}</h5>
+                                <p class="reminder-time"><i class="fas fa-clock me-1"></i>{{ r.time }}</p>
+                                <span class="badge {% if r.status == 'done' %}bg-success{% elif r.status == 'missed' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                    {{ r.status | upper }}
+                                </span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                {% if r.status != 'done' %}
+                                <button class="btn btn-sm btn-success rounded-pill" onclick="completeReminder({{ r.id }})">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                {% endif %}
+                                <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deleteReminder({{ r.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- People Management -->
+        <section id="people-mgmt" class="content-section" style="display:none">
+            <h2 class="section-header"><i class="fas fa-users me-2"></i>Known People</h2>
+            
+            <div class="glass-card-light p-4 mb-4">
+                <h5>Add New Person</h5>
+                <form id="addPersonForm" class="row g-3 mt-2">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" id="personName" placeholder="Full name" required>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="personRelation">
+                            <option value="daughter">Daughter</option>
+                            <option value="son">Son</option>
+                            <option value="spouse">Spouse</option>
+                            <option value="doctor">Doctor</option>
+                            <option value="caretaker">Caretaker</option>
+                            <option value="friend">Friend</option>
+                            <option value="neighbor">Neighbor</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="text" class="form-control" id="personContact" placeholder="Phone">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" id="personNotes" placeholder="Memory notes">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill">
+                            <i class="fas fa-plus me-1"></i>Add
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="row g-3" id="peopleList">
+                {% for p in people %}
+                <div class="col-md-4" id="person-{{ p.id }}">
+                    <div class="person-card glass-card-light">
+                        <div class="d-flex justify-content-between">
+                            <div class="person-avatar"><i class="fas fa-user"></i></div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deletePerson({{ p.id }})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <h5 class="mt-2">{{ p.name }}</h5>
+                        <p class="text-primary mb-1"><strong>{{ p.relationship }}</strong></p>
+                        {% if p.contact %}<p class="small mb-1"><i class="fas fa-phone me-1"></i>{{ p.contact }}</p>{% endif %}
+                        {% if p.notes %}<p class="small text-muted">{{ p.notes }}</p>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Face Tools -->
+        <section id="face-tools" class="content-section" style="display:none">
+            <h2 class="section-header"><i class="fas fa-id-card me-2"></i>Face Recognition Tools</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <a href="/face-register" class="face-tool-card glass-card-light text-decoration-none d-block">
+                        <i class="fas fa-camera fa-3x text-primary mb-3"></i>
+                        <h5>Register Face</h5>
+                        <p class="text-muted">Capture face images for a new person</p>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="/face-train" class="face-tool-card glass-card-light text-decoration-none d-block">
+                        <i class="fas fa-cogs fa-3x text-warning mb-3"></i>
+                        <h5>Train Model</h5>
+                        <p class="text-muted">Train the face recognition AI model</p>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="/face-recognize" class="face-tool-card glass-card-light text-decoration-none d-block">
+                        <i class="fas fa-search fa-3x text-success mb-3"></i>
+                        <h5>Recognize Face</h5>
+                        <p class="text-muted">Identify known people using camera</p>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Activity Logs -->
+        <section id="logs" class="content-section" style="display:none">
+            <h2 class="section-header"><i class="fas fa-list me-2"></i>Activity Logs</h2>
+            <div class="glass-card-light p-4">
+                <div class="d-flex gap-2 mb-3">
+                    <button class="btn btn-sm btn-outline-primary rounded-pill active" onclick="loadLogs()">All</button>
+                    <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="loadLogs('reminder')">Reminders</button>
+                    <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="loadLogs('face')">Face</button>
+                    <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="loadLogs('chat')">Chat</button>
+                    <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="loadLogs('people')">People</button>
+                </div>
+                <div id="logsContainer" class="activity-list"></div>
+            </div>
+        </section>
+
+        <!-- Analytics -->
+        <section id="analytics" class="content-section" style="display:none">
+            <h2 class="section-header"><i class="fas fa-chart-bar me-2"></i>Analytics</h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="glass-card-light p-4">
+                        <h5>Completion Rate (This Week)</h5>
+                        <canvas id="completionChart" height="250"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="glass-card-light p-4">
+                        <h5>Most Recognized Visitors</h5>
+                        <canvas id="visitorsChart" height="250"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="glass-card-light p-4">
+                        <h5>Daily Adherence Trend</h5>
+                        <canvas id="adherenceChart" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+<script>
+// Caretaker navigation
+document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = this.getAttribute('href').substring(1);
+        document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+        document.getElementById(target).style.display = 'block';
+        document.querySelectorAll('.sidebar-nav .nav-link').forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+// Set default date
+document.getElementById('reminderDate').value = new Date().toISOString().split('T')[0];
+
+// Add Reminder
+document.getElementById('addReminderForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    fetch('/api/reminders', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            title: document.getElementById('reminderTitle').value,
+            time: document.getElementById('reminderTime').value,
+            type: document.getElementById('reminderType').value,
+            date: document.getElementById('reminderDate').value
+        })
+    }).then(r => r.json()).then(() => location.reload());
+});
+
+// Add Person
+document.getElementById('addPersonForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    fetch('/api/people', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            name: document.getElementById('personName').value,
+            relationship: document.getElementById('personRelation').value,
+            contact: document.getElementById('personContact').value,
+            notes: document.getElementById('personNotes').value
+        })
+    }).then(r => r.json()).then(() => location.reload());
+});
+
+// Load Analytics
+fetch('/api/analytics').then(r => r.json()).then(data => {
+    // Weekly chart on overview
+    if (document.getElementById('weeklyChart')) {
+        new Chart(document.getElementById('weeklyChart'), {
+            type: 'bar',
+            data: {
+                labels: data.weekly.map(d => d.date.slice(5)),
+                datasets: [{
+                    label: 'Completed',
+                    data: data.weekly.map(d => d.completed),
+                    backgroundColor: 'rgba(74, 144, 226, 0.7)',
+                    borderRadius: 8
+                }, {
+                    label: 'Total',
+                    data: data.weekly.map(d => d.total),
+                    backgroundColor: 'rgba(74, 144, 226, 0.2)',
+                    borderRadius: 8
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+        });
+    }
+    
+    // Completion chart
+    if (document.getElementById('completionChart')) {
+        new Chart(document.getElementById('completionChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'Pending', 'Missed'],
+                datasets: [{
+                    data: [data.today.completed, data.today.total - data.today.completed - data.today.missed, data.today.missed],
+                    backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                    borderWidth: 0
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+    
+    // Visitors chart
+    if (document.getElementById('visitorsChart') && data.visitors.length > 0) {
+        new Chart(document.getElementById('visitorsChart'), {
+            type: 'bar',
+            data: {
+                labels: data.visitors.map(v => v.person_name),
+                datasets: [{
+                    label: 'Visits',
+                    data: data.visitors.map(v => v.count),
+                    backgroundColor: ['#4A90E2', '#7B68EE', '#50C878', '#FF6B6B', '#FFD93D'],
+                    borderRadius: 8
+                }]
+            },
+            options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } } }
+        });
+    }
+    
+    // Adherence trend
+    if (document.getElementById('adherenceChart')) {
+        new Chart(document.getElementById('adherenceChart'), {
+            type: 'line',
+            data: {
+                labels: data.weekly.map(d => d.date.slice(5)),
+                datasets: [{
+                    label: 'Adherence %',
+                    data: data.weekly.map(d => d.adherence),
+                    borderColor: '#4A90E2',
+                    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointBackgroundColor: '#4A90E2'
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } }, plugins: { legend: { display: false } } }
+        });
+    }
+});
+
+// Load Logs
+function loadLogs(category) {
+    const url = category ? `/api/logs?category=${category}` : '/api/logs';
+    fetch(url).then(r => r.json()).then(logs => {
+        const container = document.getElementById('logsContainer');
+        container.innerHTML = logs.map(l => `
+            <div class="activity-item">
+                <div class="activity-dot ${l.category}"></div>
+                <div>
+                    <strong>${l.action}</strong>
+                    <p class="mb-0 small text-muted">${l.details} • ${l.timestamp}</p>
+                </div>
+            </div>
+        `).join('') || '<p class="text-muted">No logs found</p>';
+    });
+}
+</script>
+{% endblock %}

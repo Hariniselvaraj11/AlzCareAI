@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Train Model - AlzCare AI{% endblock %}
+{% block body %}
+<div class="standalone-page">
+    <div class="container py-5">
+        <a href="/caretaker#face-tools" class="btn btn-outline-primary rounded-pill mb-4">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+        <div class="glass-card-light p-5 text-center">
+            <i class="fas fa-cogs fa-4x text-warning mb-4"></i>
+            <h2>Train Face Recognition Model</h2>
+            <p class="text-muted mb-4">This will process all registered face images and train the LBPH recognizer.</p>
+            
+            <button class="btn btn-warning btn-lg rounded-pill px-5" onclick="trainModel()" id="trainBtn">
+                <i class="fas fa-play me-2"></i>Start Training
+            </button>
+            
+            <div id="trainProgress" class="mt-4" style="display:none">
+                <div class="spinner-border text-warning" role="status"></div>
+                <p class="mt-2">Training in progress... Please wait.</p>
+            </div>
+            
+            <div id="trainMessage" class="mt-4"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+function trainModel() {
+    document.getElementById('trainBtn').disabled = true;
+    document.getElementById('trainProgress').style.display = 'block';
+    
+    fetch('/api/face/train', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('trainProgress').style.display = 'none';
+            document.getElementById('trainBtn').disabled = false;
+            if (data.success) {
+                document.getElementById('trainMessage').innerHTML = 
+                    `<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i>${data.message}</div>`;
+            } else {
+                document.getElementById('trainMessage').innerHTML = 
+                    `<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>${data.error}</div>`;
+            }
+        }).catch(err => {
+            document.getElementById('trainProgress').style.display = 'none';
+            document.getElementById('trainBtn').disabled = false;
+            document.getElementById('trainMessage').innerHTML = 
+                '<div class="alert alert-danger">Training failed. Check server logs.</div>';
+        });
+}
+</script>
+{% endblock %}

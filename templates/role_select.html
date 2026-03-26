@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Choose Role - AlzCare AI{% endblock %}
+{% block body %}
+<div class="landing-page">
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top glass-nav">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+                <i class="fas fa-brain brand-icon me-2"></i>
+                <span class="brand-text">AlzCare<span class="brand-ai">AI</span></span>
+            </a>
+            <div class="ms-auto d-flex gap-2 align-items-center">
+                <span class="text-white-50 small d-none d-md-inline">Welcome, {{ display_name or session.get('username') }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm rounded-pill px-3">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-section d-flex align-items-center" style="min-height:100vh; padding-top:100px;">
+        <div class="container">
+            <div class="text-center mb-5">
+                <div class="hero-badge mb-3"><i class="fas fa-user-group me-1"></i> Choose how you want to continue</div>
+                <h1 class="hero-title" style="font-size: clamp(2.2rem, 5vw, 4rem);">Select Your <span class="gradient-text">Role</span></h1>
+                <p class="hero-desc mx-auto" style="max-width: 760px;">You are signed in now. Choose Patient for a simple daily support view, or Caretaker for monitoring, reminders, people management, and analytics.</p>
+            </div>
+            <div class="row justify-content-center g-4">
+                <div class="col-md-5">
+                    <a href="{{ url_for('patient_dashboard') }}" class="role-card patient-card glass-card text-decoration-none h-100 d-block">
+                        <div class="role-icon"><i class="fas fa-user-injured"></i></div>
+                        <h3>Patient</h3>
+                        <p>Access reminders, face recognition, AI companion chat, and simple daily support tools.</p>
+                        <div class="role-features">
+                            <span><i class="fas fa-check"></i> Simple Interface</span>
+                            <span><i class="fas fa-check"></i> Large Buttons</span>
+                            <span><i class="fas fa-check"></i> Voice Alerts</span>
+                        </div>
+                        <div class="btn btn-role-patient rounded-pill mt-3">Continue as Patient <i class="fas fa-arrow-right ms-2"></i></div>
+                    </a>
+                </div>
+                <div class="col-md-5">
+                    <a href="{{ url_for('caretaker_dashboard') }}" class="role-card caretaker-card glass-card text-decoration-none h-100 d-block">
+                        <div class="role-icon"><i class="fas fa-user-nurse"></i></div>
+                        <h3>Caretaker</h3>
+                        <p>Manage people, reminders, analytics, monitoring logs, and the patient support workflow.</p>
+                        <div class="role-features">
+                            <span><i class="fas fa-check"></i> Full Dashboard</span>
+                            <span><i class="fas fa-check"></i> Analytics</span>
+                            <span><i class="fas fa-check"></i> Management</span>
+                        </div>
+                        <div class="btn btn-role-caretaker rounded-pill mt-3">Continue as Caretaker <i class="fas fa-arrow-right ms-2"></i></div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

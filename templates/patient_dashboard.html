@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% block title %}Patient Dashboard - AlzCare AI{% endblock %}
+{% block body %}
+<div class="dashboard patient-dashboard">
+    <!-- Sidebar -->
+    <aside class="sidebar patient-sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-brain"></i>
+            <span>AlzCare<span class="text-accent">AI</span></span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#welcome" class="nav-link active"><i class="fas fa-home"></i> Home</a>
+            <a href="#reminders" class="nav-link"><i class="fas fa-bell"></i> Reminders</a>
+            <a href="#chatbot" class="nav-link"><i class="fas fa-robot"></i> AI Friend</a>
+            <a href="#recognize" class="nav-link"><i class="fas fa-camera"></i> Who Is This?</a>
+            <a href="#people" class="nav-link"><i class="fas fa-users"></i> My People</a>
+            <a href="#emergency" class="nav-link emergency-nav"><i class="fas fa-phone"></i> Emergency</a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="/" class="nav-link"><i class="fas fa-arrow-left"></i> Back Home</a>
+            <a href="/logout" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Welcome Section -->
+        <section id="welcome" class="content-section">
+            <div class="welcome-card glass-card-light">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="welcome-title">Hello! Welcome Back 😊</h1>
+                        <p class="welcome-subtitle" id="currentDateTime"></p>
+                        <p class="welcome-msg">How are you feeling today? I'm here to help you with your daily routine.</p>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="welcome-icon"><i class="fas fa-sun"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="row g-3 mt-3">
+                <div class="col-6 col-md-3">
+                    <a href="#reminders" class="quick-action-card glass-card-light text-decoration-none">
+                        <i class="fas fa-bell fa-2x text-warning"></i>
+                        <span>My Reminders</span>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="#chatbot" class="quick-action-card glass-card-light text-decoration-none">
+                        <i class="fas fa-robot fa-2x text-info"></i>
+                        <span>Talk to AI</span>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="#recognize" class="quick-action-card glass-card-light text-decoration-none">
+                        <i class="fas fa-camera fa-2x text-success"></i>
+                        <span>Who Is This?</span>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="#emergency" class="quick-action-card glass-card-light text-decoration-none">
+                        <i class="fas fa-phone fa-2x text-danger"></i>
+                        <span>Emergency</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Today's Progress -->
+            <div class="row g-3 mt-3">
+                <div class="col-md-6">
+                    <div class="glass-card-light p-4">
+                        <h5><i class="fas fa-tasks me-2 text-primary"></i>Today's Progress</h5>
+                        <div class="progress mt-3" style="height: 20px; border-radius: 10px;">
+                            <div class="progress-bar progress-bar-patient" role="progressbar" id="patientProgress" style="width: 0%">0%</div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <span class="text-muted" id="patientTasksInfo">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="glass-card-light p-4">
+                        <h5><i class="fas fa-clock me-2 text-warning"></i>Next Task</h5>
+                        <div id="nextTask" class="mt-3">
+                            <p class="text-muted">Checking your schedule...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reminders Section -->
+        <section id="reminders" class="content-section" style="display:none">
+            <h2 class="section-header"><i class="fas fa-bell me-2"></i>Today's Reminders</h2>
+            <div id="patientReminders" class="row g-3">
+                {% for r in reminders %}
+                <div class="col-md-6">
+                    <div class="reminder-card glass-card-light {% if r.status == 'done' %}completed{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="reminder-type-badge {{ r.type }}">{{ r.type | upper }}</div>
+                                <h5 class="mt-2">{{ r.title }}</h5>
+                                <p class="reminder-time"><i class="fas fa-clock me-1"></i>{{ r.time }}</p>
+                            </div>
+                            <div>
+                                {% if r.status != 'done' %}
+                                <button class="btn btn-done-large rounded-pill" onclick="completeReminder({{ r.id }})">
+                                    <i class="fas fa-check me-1"></i> Done!
+                                </button>
+                                {% else %}
+                                <span class="badge bg-success rounded-pill p-2"><i class="fas fa-check"></i> Completed</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not reminders %}
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h4>No reminders for today!</h4>
+                    <p class="text-muted">Enjoy your day 🌸</p>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Chatbot Section -->
+        <section id="chatbot" class="content-section" style="display:none">
+            <h2 class="section-header"><i class="fas fa-robot me-2"></i>AI Companion</h2>
+            <div class="chat-container glass-card-light">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-bubble bot">
+                        <div class="bubble-avatar"><i class="fas fa-robot"></i></div>
+                        <div class="bubble-content">
+                            Hello! 😊 I'm your AI friend. I'm here to help you and keep you company. You can ask me anything or just talk!
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" class="form-control form-control-lg chat-input" 
+                           placeholder="Type your message..." onkeypress="if(event.key==='Enter')sendChat()">
+                    <button class="btn btn-chat-send" onclick="sendChat()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Face Recognition Section -->
+        <section id="recognize" class="content-section" style="display:none">
+            <h2 class="section-header"><i class="fas fa-camera me-2"></i>Who Is This Person?</h2>
+            <div class="glass-card-light p-4">
+                <div class="text-center">
+                    <video id="recognizeVideo" width="480" height="360" autoplay class="rounded-4 border"></video>
+                    <canvas id="recognizeCanvas" width="480" height="360" style="display:none"></canvas>
+                </div>
+                <div class="text-center mt-3">
+                    <button class="btn btn-lg btn-primary rounded-pill px-4" onclick="startRecognition()">
+                        <i class="fas fa-camera me-2"></i>Start Camera
+                    </button>
+                    <button class="btn btn-lg btn-success rounded-pill px-4 ms-2" onclick="captureAndRecognize()">
+                        <i class="fas fa-search me-2"></i>Recognize
+                    </button>
+                </div>
+                <div id="recognitionResult" class="mt-4"></div>
+            </div>
+        </section>
+
+        <!-- My People Section -->
+        <section id="people" class="content-section" style="display:none">
+            <h2 class="section-header"><i class="fas fa-users me-2"></i>My People</h2>
+            <div class="row g-3">
+                {% for p in people %}
+                <div class="col-md-6">
+                    <div class="person-card glass-card-light">
+                        <div class="person-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="person-info">
+                            <h5>{{ p.name }}</h5>
+                            <p class="text-primary mb-1"><strong>{{ p.relationship }}</strong></p>
+                            {% if p.contact %}<p class="mb-1"><i class="fas fa-phone me-1"></i>{{ p.contact }}</p>{% endif %}
+                            {% if p.notes %}<p class="text-muted small">{{ p.notes }}</p>{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not people %}
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h4>No people added yet</h4>
+                    <p class="text-muted">Ask your caretaker to add family and friends.</p>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Emergency Section -->
+        <section id="emergency" class="content-section" style="display:none">
+            <h2 class="section-header"><i class="fas fa-phone-volume me-2"></i>Emergency</h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="emergency-card glass-card-light">
+                        <i class="fas fa-ambulance fa-3x text-danger mb-3"></i>
+                        <h4>Call Emergency</h4>
+                        <p>Tap to call emergency services immediately</p>
+                        <a href="tel:112" class="btn btn-danger btn-lg rounded-pill px-5">
+                            <i class="fas fa-phone me-2"></i>Call 112
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="emergency-card glass-card-light">
+                        <i class="fas fa-user-nurse fa-3x text-primary mb-3"></i>
+                        <h4>Call Caretaker</h4>
+                        <p>Reach your caretaker right away</p>
+                        <a href="tel:+1234567890" class="btn btn-primary btn-lg rounded-pill px-5">
+                            <i class="fas fa-phone me-2"></i>Call Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+<script>
+// Patient navigation
+document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = this.getAttribute('href').substring(1);
+        document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+        document.getElementById(target).style.display = 'block';
+        document.querySelectorAll('.sidebar-nav .nav-link').forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+// Update date/time
+function updateDateTime() {
+    const now = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('currentDateTime').textContent = 
+        now.toLocaleDateString('en-US', options) + ' • ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+updateDateTime();
+setInterval(updateDateTime, 60000);
+
+// Load progress
+fetch('/api/reminders').then(r=>r.json()).then(data => {
+    const total = data.length;
+    const done = data.filter(r => r.status === 'done').length;
+    const pct = total > 0 ? Math.round(done/total*100) : 0;
+    document.getElementById('patientProgress').style.width = pct + '%';
+    document.getElementById('patientProgress').textContent = pct + '%';
+    document.getElementById('patientTasksInfo').textContent = `${done} of ${total} tasks completed`;
+    
+    const pending = data.filter(r => r.status === 'pending').sort((a,b) => a.time.localeCompare(b.time));
+    if (pending.length > 0) {
+        document.getElementById('nextTask').innerHTML = `
+            <div class="d-flex align-items-center">
+                <div class="me-3"><i class="fas fa-arrow-right fa-2x text-primary"></i></div>
+                <div>
+                    <h5 class="mb-0">${pending[0].title}</h5>
+                    <span class="text-muted">${pending[0].time} - ${pending[0].type}</span>
+                </div>
+            </div>`;
+    } else {
+        document.getElementById('nextTask').innerHTML = '<p class="text-success"><i class="fas fa-check me-1"></i> All tasks done for today!</p>';
+    }
+});
+</script>
+{% endblock %}

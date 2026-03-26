@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Face Recognition - AlzCare AI{% endblock %}
+{% block body %}
+<div class="standalone-page">
+    <div class="container py-5">
+        <a href="/caretaker#face-tools" class="btn btn-outline-primary rounded-pill mb-4">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+        <div class="glass-card-light p-5">
+            <h2 class="mb-4"><i class="fas fa-search me-2 text-success"></i>Live Face Recognition</h2>
+            
+            <div class="row">
+                <div class="col-md-7 text-center">
+                    <video id="recVideo" width="540" height="400" autoplay class="rounded-4 border"></video>
+                    <canvas id="recCanvas" width="540" height="400" style="display:none"></canvas>
+                    <div class="mt-3">
+                        <button class="btn btn-primary btn-lg rounded-pill px-4" onclick="startRecCamera()">
+                            <i class="fas fa-video me-2"></i>Start Camera
+                        </button>
+                        <button class="btn btn-success btn-lg rounded-pill px-4 ms-2" onclick="recognizeFace()">
+                            <i class="fas fa-search me-2"></i>Recognize
+                        </button>
+                        <button class="btn btn-info btn-lg rounded-pill px-4 ms-2" onclick="startAutoRecognize()">
+                            <i class="fas fa-sync me-2"></i>Auto Mode
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <h5>Recognition Results</h5>
+                    <div id="recResults" class="mt-3">
+                        <p class="text-muted">Start camera and click Recognize to identify faces.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let recStream = null;
+let autoInterval = null;
+
+function startRecCamera() {
+    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+        recStream = stream;
+        document.getElementById('recVideo').srcObject = stream;
+    });
+}
+
+function recognizeFace() {
+    const video = document.getElementById('recVideo');
+    const canvas = document.getElementById('recCanvas');
+    canvas.width = video.videoWidth || 540;
+    canvas.height = video.videoHeight || 400;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const imgData = canvas.toDataURL('image/jpeg');
+    
+    fetch('/api/face/recognize', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ image: imgData })
+    }).then(r => r.json()).then(data => {
+        const container = document.getElementById('recResults');
+        if (!data.success) {
+            container.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+            return;
+        }
+        if (data.faces.length === 0) {
+            container.innerHTML = '<div class="alert alert-info">No face detected. Try again.</div>';
+            return;
+        }
+        container.innerHTML = data.faces.map(f => `
+            <div class="recognition-result-card glass-card-light mb-3 p-3 ${f.known ? 'border-success' : 'border-danger'}">
+                <div class="d-flex align-items-center">
+                    <div class="rec-icon ${f.known ? 'known' : 'unknown'}">
+                        <i class="fas ${f.known ? 'fa-user-check' : 'fa-user-times'}"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h5 class="mb-0 ${f.known ? 'text-success' : 'text-danger'}">${f.name}</h5>
+                        ${f.relationship ? `<p class="mb-0 text-primary">${f.relationship}</p>` : ''}
+                        <small class="text-muted">Confidence: ${f.confidence}%</small>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    });
+}
+
+function startAutoRecognize() {
+    if (autoInterval) {
+        clearInterval(autoInterval);
+        autoInterval = null;
+        return;
+    }
+    autoInterval = setInterval(recognizeFace, 3000);
+}
+</script>
+{% endblock %}

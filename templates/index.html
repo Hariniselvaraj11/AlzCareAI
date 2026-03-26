@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Alzheimer Patient Support System - Home{% endblock %}
+{% block body %}
+<div class="landing-page">
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top glass-nav">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+                <i class="fas fa-brain brand-icon me-2"></i>
+                <span class="brand-text">AlzCare<span class="brand-ai">AI</span></span>
+            </a>
+            <div class="ms-auto d-flex gap-2">
+                {% if session.get('user_id') %}
+                    <
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm rounded-pill px-3">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login_page') }}" class="btn btn-outline-light btn-sm rounded-pill px-3">Sign In</a>
+                    <a href="{{ url_for('login_page') }}#register" class="btn btn-light btn-sm rounded-pill px-3">Create Account</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-section">
+        <div class="hero-particles"></div>
+        <div class="container">
+            <div class="row align-items-center min-vh-100">
+                <div class="col-lg-7">
+                    <div class="hero-badge mb-3">
+                        <i class="fas fa-shield-heart me-1"></i> AI-Powered Healthcare
+                    </div>
+                    <h1 class="hero-title">
+                        Alzheimer Patient<br>
+                        <span class="gradient-text">Support System</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        with AI Companion and Smart Routine Monitoring
+                    </p>
+                    <p class="hero-desc">
+                        Empowering patients and caretakers with intelligent face recognition,
+                        personalized AI companion, smart reminders, and comprehensive activity monitoring.
+                    </p>
+                    
+                        
+                    </div>
+                    <div class="hero-stats d-flex gap-4 mt-5">
+                        <div class="stat-item">
+                            <div class="stat-number">AI</div>
+                            <div class="stat-label">Face Recognition</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">24/7</div>
+                            <div class="stat-label">Monitoring</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">Smart</div>
+                            <div class="stat-label">Reminders</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-5 d-none d-lg-block">
+                    <div class="hero-visual">
+                        <div class="floating-card card-1">
+                            <i class="fas fa-user-check"></i>
+                            <span>Face Recognized</span>
+                        </div>
+                        <div class="floating-card card-2">
+                            <i class="fas fa-pills"></i>
+                            <span>Medicine Reminder</span>
+                        </div>
+                        <div class="floating-card card-3">
+                            <i class="fas fa-robot"></i>
+                            <span>AI Companion</span>
+                        </div>
+                        <div class="brain-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features-section py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="section-title">Intelligent Features</h2>
+                <p class="section-subtitle">Designed with care for patients and caretakers</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4"><div class="feature-card glass-card"><div class="feature-icon bg-gradient-1"><i class="fas fa-face-smile"></i></div><h5>Face Recognition</h5><p>Identify family, friends, and caretakers using AI-powered LBPH face recognition with relationship details.</p></div></div>
+                <div class="col-md-4"><div class="feature-card glass-card"><div class="feature-icon bg-gradient-2"><i class="fas fa-robot"></i></div><h5>AI Companion</h5><p>A gentle, supportive chatbot that remembers facts, plays memory games, and provides comfort.</p></div></div>
+                <div class="col-md-4"><div class="feature-card glass-card"><div class="feature-icon bg-gradient-3"><i class="fas fa-bell"></i></div><h5>Smart Reminders</h5><p>Medicine, food, water, walk reminders with voice alerts, completion tracking, and overdue notifications.</p></div></div>
+                <div class="col-md-4"><div class="feature-card glass-card"><div class="feature-icon bg-gradient-4"><i class="fas fa-chart-line"></i></div><h5>Analytics Dashboard</h5><p>Track daily adherence, visitor frequency, completion trends, and generate weekly monitoring reports.</p></div></div>
+                <div class="col-md-4"><div class="feature-card glass-card"><div class="feature-icon bg-gradient-5"><i class="fas fa-clipboard-list"></i></div><h5>Activity Monitoring</h5><p>Comprehensive logging of recognition events, reminder completions, and all system interactions.</p></div></div>
+                <div class="col-md-4"><div class="feature-card glass-card"><div class="feature-icon bg-gradient-6"><i class="fas fa-phone-volume"></i></div><h5>Emergency Access</h5><p>Quick emergency contact access with one-tap calling and alert notifications for caretakers.</p></div></div>
+            </div>
+        </div>
+    </section>
+
+    
+
+    <footer class="footer-section py-4">
+        <div class="container text-center">
+            <p class="mb-0 text-muted"><i class="fas fa-brain me-1"></i>Alzheimer Patient Support System with AI Companion &copy; 2024</p>
+        </div>
+    </footer>
+</div>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Face Registration - AlzCare AI{% endblock %}
+{% block body %}
+<div class="standalone-page">
+    <div class="container py-5">
+        <a href="/caretaker#face-tools" class="btn btn-outline-primary rounded-pill mb-4">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+        <div class="glass-card-light p-5">
+            <h2 class="mb-4"><i class="fas fa-camera me-2 text-primary"></i>Face Registration</h2>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Person's Name</label>
+                        <input type="text" id="regName" class="form-control form-control-lg" placeholder="Enter full name">
+                    </div>
+                    
+                    <div class="capture-guidance glass-card-light p-3 mb-3">
+                        <h6><i class="fas fa-info-circle me-1 text-info"></i>Capture Guide</h6>
+                        <div id="captureGuide" class="guide-steps">
+                            <div class="guide-step" data-step="1">👤 Look straight at the camera</div>
+                            <div class="guide-step" data-step="4">👈 Turn slightly left</div>
+                            <div class="guide-step" data-step="7">👉 Turn slightly right</div>
+                            <div class="guide-step" data-step="10">👆 Look slightly up</div>
+                            <div class="guide-step" data-step="13">👇 Look slightly down</div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress mb-3" style="height: 20px; border-radius: 10px;">
+                        <div class="progress-bar bg-gradient-primary" id="captureProgress" style="width: 0%">0 / 15</div>
+                    </div>
+                    
+                    <button class="btn btn-primary btn-lg rounded-pill px-4 me-2" onclick="startCapture()">
+                        <i class="fas fa-play me-2"></i>Start Camera
+                    </button>
+                    <button class="btn btn-success btn-lg rounded-pill px-4" onclick="captureImage()" id="captureBtn" disabled>
+                        <i class="fas fa-camera me-2"></i>Capture (<span id="captureCount">0</span>/15)
+                    </button>
+                    <button class="btn btn-warning btn-lg rounded-pill px-4 ms-2" onclick="saveRegistration()" id="saveBtn" disabled>
+                        <i class="fas fa-save me-2"></i>Save
+                    </button>
+                </div>
+                <div class="col-md-6 text-center">
+                    <video id="regVideo" width="400" height="300" autoplay class="rounded-4 border mb-3"></video>
+                    <canvas id="regCanvas" width="400" height="300" style="display:none"></canvas>
+                    <div id="capturedGrid" class="row g-2 mt-2"></div>
+                </div>
+            </div>
+            
+            <div id="regMessage" class="mt-3"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let regStream = null;
+let capturedImages = [];
+
+function startCapture() {
+    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+        regStream = stream;
+        document.getElementById('regVideo').srcObject = stream;
+        document.getElementById('captureBtn').disabled = false;
+    }).catch(err => {
+        document.getElementById('regMessage').innerHTML = 
+            '<div class="alert alert-danger">Camera access denied. Please allow camera.</div>';
+    });
+}
+
+function captureImage() {
+    if (capturedImages.length >= 15) return;
+    
+    const video = document.getElementById('regVideo');
+    const canvas = document.getElementById('regCanvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const imgData = canvas.toDataURL('image/jpeg');
+    capturedImages.push(imgData);
+    
+    const count = capturedImages.length;
+    document.getElementById('captureCount').textContent = count;
+    document.getElementById('captureProgress').style.width = (count/15*100) + '%';
+    document.getElementById('captureProgress').textContent = `${count} / 15`;
+    
+    // Show thumbnail
+    document.getElementById('capturedGrid').innerHTML += `
+        <div class="col-3"><img src="${imgData}" class="img-fluid rounded-3 border"></div>
+    `;
+    
+    // Update guidance
+    const steps = document.querySelectorAll('.guide-step');
+    steps.forEach(s => {
+        s.classList.remove('active');
+        if (parseInt(s.dataset.step) <= count && parseInt(s.dataset.step) > count - 3) {
+            s.classList.add('active');
+        }
+    });
+    
+    if (count >= 15) {
+        document.getElementById('captureBtn').disabled = true;
+        document.getElementById('saveBtn').disabled = false;
+    }
+}
+
+function saveRegistration() {
+    const name = document.getElementById('regName').value.trim();
+    if (!name) {
+        document.getElementById('regMessage').innerHTML = 
+            '<div class="alert alert-warning">Please enter a name first!</div>';
+        return;
+    }
+    
+    fetch('/api/face/register', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ name: name, images: capturedImages })
+    }).then(r => r.json()).then(data => {
+        if (data.success) {
+            document.getElementById('regMessage').innerHTML = 
+                `<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i>${data.message}</div>`;
+            if (regStream) regStream.getTracks().forEach(t => t.stop());
+        } else {
+            document.getElementById('regMessage').innerHTML = 
+                `<div class="alert alert-danger">${data.error}</div>`;
+        }
+    });
+}
+</script>
+{% endblock %}
